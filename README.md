@@ -1,0 +1,2 @@
+# gotest
+test go routines
