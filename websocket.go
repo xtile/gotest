@@ -9,17 +9,20 @@ import (
 	"bytes"
 	"compress/flate"
 	"compress/gzip"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
+	"strconv"
+	"sync"
 
 	"github.com/sacOO7/gowebsocket"
 )
 
-func main() {
-
-	exchange := "HUOBI"
+func startWebSocketDataTransfer(exchange string) {
+	//exchange := "HUOBI"
 	//exchange = "OKEX"
 	//exchange = "BINANCE"
 
@@ -39,7 +42,7 @@ func main() {
 	}
 
 	socket.OnConnected = func(socket gowebsocket.Socket) {
-		log.Println("Connected to server")
+		log.Println(exchange + ": Connected to server")
 
 		if exchange == "BINANCE" {
 			//binance
@@ -60,11 +63,26 @@ func main() {
 	}
 
 	socket.OnTextMessage = func(message string, socket gowebsocket.Socket) {
-		log.Println("Recieved message " + message)
+		//log.Println(exchange + ": Recieved message " + message)
+
+		if exchange == "BINANCE" {
+			// binance - no action, because we get text data from binance
+
+			var result map[string]string
+			json.Unmarshal([]byte(message), &result)
+
+			p := result["p"]
+			log.Println(exchange + ": price " + p)
+
+			return
+
+		}
+		log.Println(exchange + ": Recieved message " + message)
+
 	}
 
 	socket.OnBinaryMessage = func(data []byte, socket gowebsocket.Socket) {
-		log.Println("Recieved binary data ", data)
+		//log.Println(exchange+": Recieved binary data ", data)
 
 		if exchange == "BINANCE" {
 			// binance - no action, because we get text data from binance
@@ -87,7 +105,24 @@ func main() {
 				return
 			}
 			strUnzipped := string(bytesUnzipped)
-			log.Println("decoded message:  ", strUnzipped)
+
+			var result map[string]interface{}
+			json.Unmarshal([]byte(strUnzipped), &result)
+
+			if result["tick"] != nil {
+				p := result["tick"].(map[string]interface{})
+				if p != nil {
+					price := p["lastPrice"].(float64)
+					//strPrice, _ :=  strconv.ParseFloat(price, 64)
+					strPrice := strconv.FormatFloat(price, 'f', 2, 64)
+					log.Println(exchange + ": price " + strPrice)
+				}
+			} else {
+				log.Println(exchange+": decoded message:  ", strUnzipped)
+
+			}
+			//p := result["tick"]
+			//log.Println(exchange + ": price " + p)
 
 		} else if exchange == "OKEX" {
 			// okex
@@ -97,21 +132,35 @@ func main() {
 			b.ReadFrom(r)
 			r.Close()
 			strData := string(b.Bytes())
-			log.Println("inflated data ", strData)
+			//log.Println(exchange+": inflated data ", strData)
+
+			var result map[string]interface{} //json.RawMessage
+			json.Unmarshal([]byte(strData), &result)
+
+			if result["data"] != nil {
+				p := result["data"].([]interface{})
+				if p != nil && p[0] != nil {
+					pp := p[0].(map[string]interface{})
+					if pp != nil {
+						price := pp["last"].(string)
+						log.Println(exchange + ": price " + price)
+					}
+				}
+			}
 		}
 
 	}
 
 	socket.OnPingReceived = func(data string, socket gowebsocket.Socket) {
-		log.Println("Recieved ping " + data)
+		log.Println(exchange + ": Recieved ping " + data)
 	}
 
 	socket.OnPongReceived = func(data string, socket gowebsocket.Socket) {
-		log.Println("Recieved pong " + data)
+		log.Println(exchange + ": Recieved pong " + data)
 	}
 
 	socket.OnDisconnected = func(err error, socket gowebsocket.Socket) {
-		log.Println("Disconnected from server ")
+		log.Println(exchange + ": Disconnected from server ")
 		return
 	}
 
@@ -125,4 +174,22 @@ func main() {
 			return
 		}
 	}
+}
+
+func main() {
+
+	runtime.GOMAXPROCS(3)
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	//go startWebSocketDataTransfer("BINANCE")
+	go startWebSocketDataTransfer("HUOBI")
+	go startWebSocketDataTransfer("OKEX")
+
+	log.Println("Waiting To Finish")
+	wg.Wait()
+
+	log.Println("\nTerminating Program")
+
 }
