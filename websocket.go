@@ -1,10 +1,9 @@
 package main
 
-//TODO: 
+//TODO:
 // run 3 websocket connections with goroutines
-// store current price in variables 
+// store current price in variables
 // every n sec compare prices log prices and their diff
-
 
 import (
 	"bytes"
@@ -41,18 +40,19 @@ func main() {
 
 	socket.OnConnected = func(socket gowebsocket.Socket) {
 		log.Println("Connected to server")
-		//binance
-		//socket.SendText("{  \"method\": \"SUBSCRIBE\",  \"params\": [    \"btcusdt@kline_1m\" ],  \"id\": 1}")
-		//socket.SendText("{  \"method\": \"SUBSCRIBE\",  \"params\": [    \"btcusdt@trade\" ],  \"id\": 1}")
-		//okex
-		//socket.SendText("{\"op\": \"subscribe\", \"args\": [\"spot/ticker:BTC-USDT\"]}")
 
-		//huobi
-		socket.SendText("{ \"sub\": \"market.btcusdc.ticker\", \"id\": \"1\" }")
+		if exchange == "BINANCE" {
+			//binance
+			//socket.SendText("{  \"method\": \"SUBSCRIBE\",  \"params\": [    \"btcusdt@kline_1m\" ],  \"id\": 1}")
+			socket.SendText("{  \"method\": \"SUBSCRIBE\",  \"params\": [    \"btcusdt@trade\" ],  \"id\": 1}")
+		} else if exchange == "HUOBI" {
+			//huobi
+			socket.SendText("{ \"sub\": \"market.btcusdc.ticker\", \"id\": \"1\" }")
+		} else if exchange == "OKEX" {
+			//okex
+			socket.SendText("{\"op\": \"subscribe\", \"args\": [\"spot/ticker:BTC-USDT\"]}")
+		}
 
-		/*
-			{  "method": "SUBSCRIBE",  "params": [    "btcusdt@aggTrade",    "btcusdt@depth"  ],  "id": 1}
-		*/
 	}
 
 	socket.OnConnectError = func(err error, socket gowebsocket.Socket) {
@@ -67,27 +67,27 @@ func main() {
 		log.Println("Recieved binary data ", data)
 
 		if exchange == "BINANCE" {
-			// binance
-			socket = gowebsocket.New("wss://stream.binance.com:9443/ws/BTCUSDT@kline_1m")
+			// binance - no action, because we get text data from binance
+
 		} else if exchange == "HUOBI" {
 			// huobi
-			strDataOriginal := string(data)
-			log.Println("original data ", strDataOriginal)
+			//strDataOriginal := string(data)
+			//log.Println("original data ", strDataOriginal)
 
-			bz := bytes.NewReader(data[:])
-			z, err := gzip.NewReader(bz)
+			bytesZipped := bytes.NewReader(data[:])
+			zipReader, err := gzip.NewReader(bytesZipped)
 			if err != nil {
 				log.Println("error1 ", err)
 				return
 			}
-			defer z.Close()
-			p, err := ioutil.ReadAll(z)
+			defer zipReader.Close()
+			bytesUnzipped, err := ioutil.ReadAll(zipReader)
 			if err != nil {
 				log.Println("error2 ", err)
 				return
 			}
-			strDataGzip := string(p)
-			log.Println("decoded message:  ", strDataGzip)
+			strUnzipped := string(bytesUnzipped)
+			log.Println("decoded message:  ", strUnzipped)
 
 		} else if exchange == "OKEX" {
 			// okex
