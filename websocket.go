@@ -1,7 +1,7 @@
 package main
 
 //TODO:
-// run 3 websocket connections with goroutines
+// implement pong for huobi
 // store current price in variables
 // every n sec compare prices log prices and their diff
 
@@ -17,14 +17,45 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/sacOO7/gowebsocket"
 )
 
+var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
+var tsBinance, tsOKex, tsHuobi int = 0, 0, 0
+
+func comparePrices() {
+
+	for {
+		time.Sleep(2 * time.Second)
+
+		if priceBinance-priceOKex > 30 {
+			log.Println("BINANCE > OKEX --------------------------------------------")
+		}
+		if priceBinance-priceHuobi > 30 {
+			log.Println("BINANCE > HUOBI --------------------------------------------")
+		}
+
+		if priceOKex-priceBinance > 30 {
+			log.Println("OKEX > BINANCE --------------------------------------------")
+		}
+		if priceOKex-priceHuobi > 30 {
+			log.Println("OKEX > HUOBI --------------------------------------------")
+		}
+
+		if priceHuobi-priceOKex > 30 {
+			log.Println("HUOBI > OKEX --------------------------------------------")
+		}
+		if priceHuobi-priceBinance > 30 {
+			log.Println("HUOBI > BINANCE --------------------------------------------")
+		}
+
+	}
+
+}
+
 func startWebSocketDataTransfer(exchange string) {
-	//exchange := "HUOBI"
-	//exchange = "OKEX"
-	//exchange = "BINANCE"
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -73,6 +104,7 @@ func startWebSocketDataTransfer(exchange string) {
 
 			p := result["p"]
 			log.Println(exchange + ": price " + p)
+			priceBinance, _ = strconv.ParseFloat(p, 2)
 
 			return
 
@@ -113,16 +145,15 @@ func startWebSocketDataTransfer(exchange string) {
 				p := result["tick"].(map[string]interface{})
 				if p != nil {
 					price := p["lastPrice"].(float64)
-					//strPrice, _ :=  strconv.ParseFloat(price, 64)
 					strPrice := strconv.FormatFloat(price, 'f', 2, 64)
 					log.Println(exchange + ": price " + strPrice)
+					priceHuobi, _ = strconv.ParseFloat(strPrice, 2)
+
 				}
 			} else {
 				log.Println(exchange+": decoded message:  ", strUnzipped)
 
 			}
-			//p := result["tick"]
-			//log.Println(exchange + ": price " + p)
 
 		} else if exchange == "OKEX" {
 			// okex
@@ -144,6 +175,7 @@ func startWebSocketDataTransfer(exchange string) {
 					if pp != nil {
 						price := pp["last"].(string)
 						log.Println(exchange + ": price " + price)
+						priceOKex, _ = strconv.ParseFloat(price, 2)
 					}
 				}
 			}
@@ -178,14 +210,15 @@ func startWebSocketDataTransfer(exchange string) {
 
 func main() {
 
-	runtime.GOMAXPROCS(3)
+	runtime.GOMAXPROCS(4)
 
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 
-	//go startWebSocketDataTransfer("BINANCE")
+	go startWebSocketDataTransfer("BINANCE")
 	go startWebSocketDataTransfer("HUOBI")
 	go startWebSocketDataTransfer("OKEX")
+	go comparePrices()
 
 	log.Println("Waiting To Finish")
 	wg.Wait()
