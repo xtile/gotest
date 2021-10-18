@@ -1,5 +1,11 @@
 package main
 
+//TODO: 
+// run 3 websocket connections with goroutines
+// store current price in variables 
+// every n sec compare prices log prices and their diff
+
+
 import (
 	"bytes"
 	"compress/flate"
