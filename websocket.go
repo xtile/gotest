@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sacOO7/GoWebsocket@latest"
+	"github.com/xtile/GoWebsocket@latest"
 )
 
 var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
