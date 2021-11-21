@@ -21,6 +21,9 @@ import (
 
 	//"github.com/xtile/GoWebsocket@latest"
 	"github.com/sacOO7/gowebsocket"
+	"github.com/gorilla/websocket"// v1.4.2 // indirect
+	"github.com/sacOO7/go-logger" //v0.0.0-20180719173527-9ac9add5a50d // indirect	
+	
 )
 
 var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
