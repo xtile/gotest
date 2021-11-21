@@ -238,7 +238,7 @@ func main() {
 				log.Println("HUOBI > BINANCE --------------------------------------------")
 			}
 		}
-	}	
+	}()	
 
         log.Println("awaiting signal")
         <-done
