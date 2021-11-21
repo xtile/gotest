@@ -6,6 +6,7 @@ package main
 // every n sec compare prices log prices and their diff
 
 import (
+	"fmt"
 	"bytes"
 	"compress/flate"
 	"compress/gzip"
@@ -21,8 +22,8 @@ import (
 
 	//"github.com/xtile/GoWebsocket@latest"
 	"github.com/sacOO7/gowebsocket"
-	"github.com/gorilla/websocket"// v1.4.2 // indirect
-	"github.com/sacOO7/go-logger" //v0.0.0-20180719173527-9ac9add5a50d // indirect	
+	//"github.com/gorilla/websocket"// v1.4.2 // indirect
+	//"github.com/sacOO7/go-logger" //v0.0.0-20180719173527-9ac9add5a50d // indirect	
 	
 )
 
