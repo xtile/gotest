@@ -211,7 +211,7 @@ func main() {
 	go startWebSocketDataTransfer("HUOBI")
 	go startWebSocketDataTransfer("OKEX")
 	//go comparePrices(sigs, done)
-	go func comparePrices() {
+	go func () {
 		for {
 			sig := <-sigs
 			fmt.Println()
