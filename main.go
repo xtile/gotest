@@ -5,6 +5,8 @@ package main
 // store current price in variables
 // every n sec compare prices log prices and their diff
 
+
+
 import (
 	//"fmt"
         "fmt"
