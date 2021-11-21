@@ -214,8 +214,9 @@ func main() {
 	go func () {
 		for {
 			sig := <-sigs
-			fmt.Println()
+			fmt.Println("COMPARE PRICES ")
 			fmt.Println(sig)
+			fmt.Println("COMPARE PRICES - AFTER SIG")
 			done <- true
 
 			time.Sleep(2 * time.Second)
