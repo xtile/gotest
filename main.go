@@ -54,7 +54,7 @@ func main() {
 var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
 var tsBinance, tsOKex, tsHuobi int = 0, 0, 0
 
-func comparePrices() {
+func comparePrices(sigs, done) {
 
 	for {
 		
@@ -265,7 +265,7 @@ func main() {
 	go startWebSocketDataTransfer("BINANCE")
 	go startWebSocketDataTransfer("HUOBI")
 	go startWebSocketDataTransfer("OKEX")
-	go comparePrices()
+	go comparePrices(sigs, done)
 
         log.Println("awaiting signal")
         <-done
