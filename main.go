@@ -37,7 +37,7 @@ import (
 var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
 var tsBinance, tsOKex, tsHuobi int = 0, 0, 0
 
-go comparePrices(){
+func comparePrices(){
 //go func () {
 	for {
 
