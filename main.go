@@ -37,7 +37,31 @@ import (
 var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
 var tsBinance, tsOKex, tsHuobi int = 0, 0, 0
 
+go comparePrices(){
+//go func () {
+	for {
 
+		time.Sleep(2 * time.Second)
+		if priceBinance-priceOKex > 30 {
+			log.Println("BINANCE > OKEX --------------------------------------------")
+		}
+		if priceBinance-priceHuobi > 30 {
+			log.Println("BINANCE > HUOBI --------------------------------------------")
+		}
+		if priceOKex-priceBinance > 30 {
+			log.Println("OKEX > BINANCE --------------------------------------------")
+		}
+		if priceOKex-priceHuobi > 30 {
+			log.Println("OKEX > HUOBI --------------------------------------------")
+		}
+		if priceHuobi-priceOKex > 30 {
+			log.Println("HUOBI > OKEX --------------------------------------------")
+		}
+		if priceHuobi-priceBinance > 30 {
+			log.Println("HUOBI > BINANCE --------------------------------------------")
+		}
+	}
+}
 
 func startWebSocketDataTransfer(exchange string) {
 
@@ -210,36 +234,30 @@ func main() {
 	go startWebSocketDataTransfer("BINANCE")
 	go startWebSocketDataTransfer("HUOBI")
 	go startWebSocketDataTransfer("OKEX")
-	//go comparePrices(sigs, done)
+	go comparePrices()
 	go func () {
 		for {
 			sig := <-sigs
-			fmt.Println("COMPARE PRICES ")
+			fmt.Println(" WAITING SIG ")
 			fmt.Println(sig)
-			fmt.Println("COMPARE PRICES - AFTER SIG")
+			fmt.Println("WAITING SIG - AFTER SIG")
 			done <- true
+			fmt.Println("CLEANUP")
+			os.Exit(1)
+			fmt.Println("AFTER EXIT")
+			
 
-			time.Sleep(2 * time.Second)
-			if priceBinance-priceOKex > 30 {
-				log.Println("BINANCE > OKEX --------------------------------------------")
-			}
-			if priceBinance-priceHuobi > 30 {
-				log.Println("BINANCE > HUOBI --------------------------------------------")
-			}
-			if priceOKex-priceBinance > 30 {
-				log.Println("OKEX > BINANCE --------------------------------------------")
-			}
-			if priceOKex-priceHuobi > 30 {
-				log.Println("OKEX > HUOBI --------------------------------------------")
-			}
-			if priceHuobi-priceOKex > 30 {
-				log.Println("HUOBI > OKEX --------------------------------------------")
-			}
-			if priceHuobi-priceBinance > 30 {
-				log.Println("HUOBI > BINANCE --------------------------------------------")
-			}
 		}
 	}()	
+	
+	
+	//c := make(chan os.Signal)
+	//signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	//go func() {
+	//	<-c
+	//	cleanup()
+	//	os.Exit(1)
+	//}()	
 
         log.Println("awaiting signal")
         <-done
