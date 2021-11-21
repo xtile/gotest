@@ -6,7 +6,9 @@ package main
 // every n sec compare prices log prices and their diff
 
 import (
-	"fmt"
+	//"fmt"
+        "fmt"
+        "syscall"	
 	"bytes"
 	"compress/flate"
 	"compress/gzip"
@@ -27,6 +29,28 @@ import (
 	
 )
 
+
+
+func main() {
+    sigs := make(chan os.Signal, 1)
+    done := make(chan bool, 1)
+
+    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+    go func() {
+        sig := <-sigs
+        fmt.Println()
+        fmt.Println(sig)
+        done <- true
+    }()
+
+    fmt.Println("awaiting signal")
+    <-done
+    fmt.Println("exiting")
+}
+
+
+
 var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
 var tsBinance, tsOKex, tsHuobi int = 0, 0, 0
 
@@ -34,12 +58,12 @@ func comparePrices() {
 
 	for {
 		
-		select {
-		case <-interrupt:
-			log.Println("comparePrices: interrupt")
-			socket.Close()
-			return
-		}
+
+		
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
 
 		
 		
@@ -225,6 +249,14 @@ func startWebSocketDataTransfer(exchange string) {
 
 func main() {
 
+        sigs := make(chan os.Signal, 1)
+        done := make(chan bool, 1)
+
+        signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+
+
+	
 	runtime.GOMAXPROCS(4)
 
 	var wg sync.WaitGroup
@@ -235,6 +267,10 @@ func main() {
 	go startWebSocketDataTransfer("OKEX")
 	go comparePrices()
 
+        log.Println("awaiting signal")
+        <-done
+        log.Println("exiting")	
+	
 	log.Println("Waiting To Finish")
 	wg.Wait()
 
