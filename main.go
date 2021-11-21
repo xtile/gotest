@@ -20,7 +20,7 @@ import (
 	"time"
 
 	//"github.com/xtile/GoWebsocket@latest"
-	"github.com/sacOO7/gowebsocket@latest"
+	"github.com/sacOO7/gowebsocket"
 )
 
 var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
@@ -29,6 +29,16 @@ var tsBinance, tsOKex, tsHuobi int = 0, 0, 0
 func comparePrices() {
 
 	for {
+		
+		select {
+		case <-interrupt:
+			log.Println("comparePrices: interrupt")
+			socket.Close()
+			return
+		}
+
+		
+		
 		time.Sleep(2 * time.Second)
 
 		if priceBinance-priceOKex > 30 {
@@ -202,7 +212,7 @@ func startWebSocketDataTransfer(exchange string) {
 	for {
 		select {
 		case <-interrupt:
-			log.Println("interrupt")
+			log.Println("exchange: interrupt")
 			socket.Close()
 			return
 		}
