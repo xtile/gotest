@@ -1,18 +1,14 @@
 package main
 
 //TODO:
-// implement pong for huobi
-// store current price in variables
-// every n sec compare prices log prices and their diff
 
 import (
 	//"fmt"
-        "fmt"
-        "syscall"	
 	"bytes"
 	"compress/flate"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -20,45 +16,59 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 
-	//"github.com/xtile/GoWebsocket@latest"
 	"github.com/sacOO7/gowebsocket"
-	//"github.com/gorilla/websocket"// v1.4.2 // indirect
-	//"github.com/sacOO7/go-logger" //v0.0.0-20180719173527-9ac9add5a50d // indirect	
-	
 )
-
-
-
-
-
 
 var priceBinance, priceOKex, priceHuobi float64 = 0, 0, 0
 var tsBinance, tsOKex, tsHuobi int = 0, 0, 0
+var delta float64 = 0.002
+var index int = 0
+var avgPrice float64 = 0
 
-func comparePrices(){
-//go func () {
+//var BINANCE_MARKER string = "ethusdt@trade"
+//var HUOBI_MARKER string = "ethusdc"
+//var OKEX_MARKER string = "ETH-USDT"
+
+var BINANCE_MARKER string = "ltcusdt@trade"
+var HUOBI_MARKER string = "ltcusdt"
+var OKEX_MARKER string = "LTC-USDT"
+
+func comparePrices() {
 	for {
 
+		if priceBinance == 0 || priceHuobi == 0 || priceOKex == 0 {
+			continue
+		}
+
+		index += 1
+
+		avgPrice = (priceBinance + priceOKex + priceHuobi) / 3
+
+		if index%10 == 2 {
+			log.Println("Binance: ", priceBinance, " HUOBI: ", priceHuobi, "OKEX: ", priceOKex)
+		}
+
 		time.Sleep(2 * time.Second)
-		if priceBinance-priceOKex > 30 {
+		if priceBinance-priceOKex > delta*avgPrice {
 			log.Println("BINANCE > OKEX --------------------------------------------")
 		}
-		if priceBinance-priceHuobi > 30 {
-			log.Println("BINANCE > HUOBI --------------------------------------------")
+		if priceBinance-priceHuobi > delta*avgPrice {
+			log.Println("BINANCE > HUOBI ", priceBinance-priceHuobi)
 		}
-		if priceOKex-priceBinance > 30 {
+		if priceOKex-priceBinance > delta*avgPrice {
 			log.Println("OKEX > BINANCE --------------------------------------------")
 		}
-		if priceOKex-priceHuobi > 30 {
-			log.Println("OKEX > HUOBI --------------------------------------------")
+		if priceOKex-priceHuobi > delta*avgPrice {
+			log.Println("OKEX > HUOBI ", priceOKex-priceHuobi)
 		}
-		if priceHuobi-priceOKex > 30 {
-			log.Println("HUOBI > OKEX --------------------------------------------")
+		if priceHuobi-priceOKex > delta*avgPrice {
+			log.Println("HUOBI > OKEX -", priceHuobi-priceOKex)
 		}
-		if priceHuobi-priceBinance > 30 {
-			log.Println("HUOBI > BINANCE --------------------------------------------")
+		if priceHuobi-priceBinance > delta*avgPrice {
+			log.Println("HUOBI > BINANCE:", priceHuobi-priceBinance)
 		}
 	}
 }
@@ -86,13 +96,16 @@ func startWebSocketDataTransfer(exchange string) {
 		if exchange == "BINANCE" {
 			//binance
 			//socket.SendText("{  \"method\": \"SUBSCRIBE\",  \"params\": [    \"btcusdt@kline_1m\" ],  \"id\": 1}")
-			socket.SendText("{  \"method\": \"SUBSCRIBE\",  \"params\": [    \"btcusdt@trade\" ],  \"id\": 1}")
+			//socket.SendText("{  \"method\": \"SUBSCRIBE\",  \"params\": [    \"btcusdt@trade\" ],  \"id\": 1}")
+			socket.SendText("{  \"method\": \"SUBSCRIBE\",  \"params\": [    \"" + BINANCE_MARKER + "\" ],  \"id\": 1}")
 		} else if exchange == "HUOBI" {
 			//huobi
-			socket.SendText("{ \"sub\": \"market.btcusdc.ticker\", \"id\": \"1\" }")
+			//socket.SendText("{ \"sub\": \"market.btcusdc.ticker\", \"id\": \"1\" }")
+			socket.SendText("{ \"sub\": \"market." + HUOBI_MARKER + ".ticker\", \"id\": \"1\" }")
 		} else if exchange == "OKEX" {
 			//okex
-			socket.SendText("{\"op\": \"subscribe\", \"args\": [\"spot/ticker:BTC-USDT\"]}")
+			//socket.SendText("{\"op\": \"subscribe\", \"args\": [\"spot/ticker:BTC-USDT\"]}")
+			socket.SendText("{\"op\": \"subscribe\", \"args\": [\"spot/ticker:" + OKEX_MARKER + "\"]}")
 		}
 
 	}
@@ -111,7 +124,7 @@ func startWebSocketDataTransfer(exchange string) {
 			json.Unmarshal([]byte(message), &result)
 
 			p := result["p"]
-			log.Println(exchange + ": price " + p)
+			//PRICE log.Println(exchange + ": price " + p)
 			priceBinance, _ = strconv.ParseFloat(p, 2)
 
 			return
@@ -129,8 +142,6 @@ func startWebSocketDataTransfer(exchange string) {
 
 		} else if exchange == "HUOBI" {
 			// huobi
-			//strDataOriginal := string(data)
-			//log.Println("original data ", strDataOriginal)
 
 			bytesZipped := bytes.NewReader(data[:])
 			zipReader, err := gzip.NewReader(bytesZipped)
@@ -154,10 +165,17 @@ func startWebSocketDataTransfer(exchange string) {
 				if p != nil {
 					price := p["lastPrice"].(float64)
 					strPrice := strconv.FormatFloat(price, 'f', 2, 64)
-					log.Println(exchange + ": price " + strPrice)
+					//PRICE log.Println(exchange + ": price " + strPrice)
 					priceHuobi, _ = strconv.ParseFloat(strPrice, 2)
 
 				}
+			} else if result["ping"] != nil {
+				pingData := result["ping"].(float64)
+				pongData := "{ \"pong\": " + fmt.Sprintf("%.0f", pingData) + " }"
+				//log.Println(exchange+": pongData:  ", pongData)
+
+				socket.SendText(pongData)
+
 			} else {
 				log.Println(exchange+": decoded message:  ", strUnzipped)
 
@@ -171,7 +189,6 @@ func startWebSocketDataTransfer(exchange string) {
 			b.ReadFrom(r)
 			r.Close()
 			strData := string(b.Bytes())
-			//log.Println(exchange+": inflated data ", strData)
 
 			var result map[string]interface{} //json.RawMessage
 			json.Unmarshal([]byte(strData), &result)
@@ -182,7 +199,7 @@ func startWebSocketDataTransfer(exchange string) {
 					pp := p[0].(map[string]interface{})
 					if pp != nil {
 						price := pp["last"].(string)
-						log.Println(exchange + ": price " + price)
+						//PRICE log.Println(exchange + ": price " + price)
 						priceOKex, _ = strconv.ParseFloat(price, 2)
 					}
 				}
@@ -192,7 +209,7 @@ func startWebSocketDataTransfer(exchange string) {
 	}
 
 	socket.OnPingReceived = func(data string, socket gowebsocket.Socket) {
-		log.Println(exchange + ": Recieved ping " + data)
+		//log.Println(exchange + ": Recieved ping " + data)
 	}
 
 	socket.OnPongReceived = func(data string, socket gowebsocket.Socket) {
@@ -218,14 +235,11 @@ func startWebSocketDataTransfer(exchange string) {
 
 func main() {
 
-        sigs := make(chan os.Signal, 1)
-        done := make(chan bool, 1)
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
 
-        signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-
-
-	
 	runtime.GOMAXPROCS(4)
 
 	var wg sync.WaitGroup
@@ -235,7 +249,7 @@ func main() {
 	go startWebSocketDataTransfer("HUOBI")
 	go startWebSocketDataTransfer("OKEX")
 	go comparePrices()
-	go func () {
+	go func() {
 		for {
 			sig := <-sigs
 			fmt.Println(" WAITING SIG ")
@@ -245,24 +259,22 @@ func main() {
 			fmt.Println("CLEANUP")
 			os.Exit(1)
 			fmt.Println("AFTER EXIT")
-			
 
 		}
-	}()	
-	
-	
+	}()
+
 	//c := make(chan os.Signal)
 	//signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	//go func() {
 	//	<-c
 	//	cleanup()
 	//	os.Exit(1)
-	//}()	
+	//}()
 
-        log.Println("awaiting signal")
-        <-done
-        log.Println("exiting")	
-	
+	log.Println("awaiting signal")
+	<-done
+	log.Println("exiting")
+
 	log.Println("Waiting To Finish")
 	wg.Wait()
 
