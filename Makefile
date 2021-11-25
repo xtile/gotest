@@ -9,6 +9,7 @@ run:
 test: 
 	go test  -v -race -timeout 10s ./...
 
-
+clean: 
+	@echo "not implemented"
 
 .DEFAULT_GOAL := build  
