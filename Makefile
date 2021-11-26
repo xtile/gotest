@@ -1,4 +1,5 @@
-
+#TODO: add env variables
+DOCKER_LABEL=gotest:latest
 
 
 
@@ -40,6 +41,18 @@ clean:
 
 
 all: makedir get build
+
+
+docker build: 
+	@echo "started docker build"
+	docker build -t gotest:latest
+	@echo "docker image complete"
+
+
+docker run
+	@echo "starting docker container"
+	docker run -d --name gotest_running -e  . 
+	@echo "complete!"
 
 
 .DEFAULT_GOAL := build  
