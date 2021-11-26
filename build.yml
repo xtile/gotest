@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+
+
+    cmach-trade: 
+        container_name: cmach_trade
+        environment:
+            REDIS_HOST: cmach-redis
+            REDIS_PORT: 6379
+            MYSQL_HOST: cmach-mysql
+            MYSQL_PORT: 3307         
+        build: . 
+        volumes: 
+        - ./logs:/app/logs #for logs
+        restart: always
