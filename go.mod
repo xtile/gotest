@@ -1,3 +1,3 @@
-module arbi
+module github.com/xtile/arbi
 
 go 1.17
