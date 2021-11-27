@@ -6,7 +6,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/xtile/gotest/internal/app/arbilogger"
+	"github.com/xtile/gotest/internal/app/arbi"
 )
 
 var (
