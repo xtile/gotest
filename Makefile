@@ -46,7 +46,7 @@ get:
 	echo export GITHUB_TOKEN=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
 	echo git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/xtile".insteadOf "https://github.com/xtile"
 
-	@$(GOGET) "github.com/xtile/gotest/internal/app/arbi"	
+	echo @$(GOGET) "github.com/xtile/gotest/internal/app/arbi"	
 	echo GOPRIVATE=github.com/xtile go get -u github.com/xtile/gotest/internal/app/arbi
 	@$(GOGET) "github.com/sacOO7/gowebsocket"
 
@@ -68,6 +68,7 @@ clean:
 	@echo "cleaning files... "
 	@rm -rf $(BUILDPATH)/bin
 	@rm -rf $(BUILDPATH)/pkg
+	go clean -modcache
 
 
 all: makedir get build

@@ -21,7 +21,7 @@ func main() {
 
 	flag.Parse()
 
-	config := arbilogger.NewConfig()
+	config := arbi.NewConfig()
 
 	_, err := toml.DecodeFile(configPath, config)
 
@@ -29,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s := arbilogger.New(config)
+	s := arbi.New(config)
 
 	if err = s.Start(); err != nil {
 		log.Fatal(err)
