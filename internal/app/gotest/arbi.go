@@ -1,4 +1,4 @@
-package arbilogger
+package gotest
 
 import (
 	"github.com/sirupsen/logrus"
