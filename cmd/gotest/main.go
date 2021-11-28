@@ -6,7 +6,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/xtile/gotest/internal/app/arbi"
+	"github.com/xtile/gotest/internal/app/gotest"
 )
 
 var (
@@ -21,7 +21,7 @@ func main() {
 
 	flag.Parse()
 
-	config := arbi.NewConfig()
+	config := gotest.NewConfig()
 
 	_, err := toml.DecodeFile(configPath, config)
 
@@ -29,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s := arbi.New(config)
+	s := gotest.New(config)
 
 	if err = s.Start(); err != nil {
 		log.Fatal(err)
