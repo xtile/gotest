@@ -1,0 +1,6 @@
+
+*.txt
+*.log
+*.out
+*.test
+pkg/*
