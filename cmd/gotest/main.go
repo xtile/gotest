@@ -35,4 +35,5 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Fatal("Finishing app...")
 }

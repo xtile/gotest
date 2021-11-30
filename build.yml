@@ -10,4 +10,5 @@ services:
         build: . 
         volumes: 
         - ./logs:/app/logs #for logs
+        - ./app:/app
         restart: always
